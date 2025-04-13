@@ -94,7 +94,6 @@ final class Mysql {
   }
 
   public function acceptDonation(int $campaign_id, object $donation): bool {
-    $jumlah = (double)preg_replace("/[^.0-9]/", "", $donation->jumlah);
     $sql = <<<SQL
     insert into campaign_donation(campaign_id, donatur_id, amount, message) values (:campaign_id, :donatur_id, :amount, :message);
     SQL;
@@ -104,7 +103,7 @@ final class Mysql {
       ->execute([
         'campaign_id' => $campaign_id,
         'donatur_id'  => $donation->donatur_id,
-        'amount'      => $jumlah,
+        'amount'      => $this->numberFromString($donation->jumlah),
         'message'     => $donation->pesan,
       ]);
   }
@@ -148,5 +147,85 @@ final class Mysql {
     };
 
     return false;
+  }
+
+  public function registerCampaign(object $campaign): void {
+    $conn = $this->connection;
+    $conn->beginTransaction();
+
+    //insert campaign
+    $campaignSQL = <<<SQL
+    insert into campaign(title, description, target_donasi) values (:title, :description, :target);
+    SQL;
+
+    $stmt = $conn->prepare($campaignSQL);
+    $stmt->execute([
+      'title'       => $campaign->title, 
+      'description' => $campaign->description,
+      'target'      => $this->numberFromString($campaign->target)
+    ]);
+    $campaignId = $conn->lastInsertId();
+
+    // insert photo
+    $photoSQL = <<<SQL
+      insert into photo(photo) values (:photo);
+    SQL;
+
+    $stmt = $conn->prepare($photoSQL);
+    $stmt->bindParam(':photo', $campaign->campaignPhoto, \PDO::PARAM_LOB);
+    $stmt->execute();
+    $photoId = $conn->lastInsertId();
+
+    // link photo with campaign
+    $campaignphotoSQL = <<<SQL
+      insert into campaign_photos(campaign_id, photo_id) values (:campaign_id, :photo_id);
+    SQL;
+
+    $stmt = $conn->prepare($campaignphotoSQL);
+    $stmt->execute([
+      'campaign_id' => (int)$campaignId, 
+      ':photo_id'   => (int)$photoId
+    ]);
+
+    $conn->commit();
+  }
+
+  public function deleteCampaign(int $id, string $curStatus) {
+    $conn = $this->connection;
+    $conn->beginTransaction();
+
+    // remove campaign donation
+    $campaignDonationSQL = <<<SQL
+      delete from campaign_donation where campaign_id = :cid;
+    SQL;
+    $stmt = $conn->prepare($campaignDonationSQL);
+    $stmt->execute(['cid' => $id]);
+
+    // remove campaign photo
+    $campaignphotoSQL = <<<SQL
+      delete from campaign_photos where campaign_id = :cid;
+    SQL;
+    $stmt = $conn->prepare($campaignphotoSQL);
+    $stmt->execute(['cid' => $id]);
+
+    // remove campaign impression
+    $campaignimpressionSQL = <<<SQL
+      delete from campaign_impression where campaign_id = :cid;
+    SQL;
+    $stmt = $conn->prepare($campaignimpressionSQL);
+    $stmt->execute(['cid' => $id]);
+
+    // remove campaign itself
+    $campaignSQL = <<<SQL
+      delete from campaign where id = :cid;
+    SQL;
+    $stmt = $conn->prepare($campaignSQL);
+    $stmt->execute(['cid' => $id]);
+
+    $conn->commit();
+  }
+
+  private function numberFromString(string $numberString) {
+    return (double)preg_replace("/[^.0-9]/", "", $numberString);
   }
 }

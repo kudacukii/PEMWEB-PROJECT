@@ -77,6 +77,18 @@ final class Campaign {
     echo Campaign::renderIntent($id, $newStatus);
   }
 
+  public static function removeCampaign(string $curStatus, int $id): void {
+    Log::trace("Remove campaign : #$id");
+
+    $okDeleted = $curStatus === "completed" || $curStatus === 'rejected';
+
+    if (Campaign::isAdmin() && $okDeleted) {
+      Mysql::db()->deleteCampaign($id, $curStatus);
+    }
+
+    echo '';
+  }
+
   public static function showDonation(int $id): void {
     Log::trace("Render Donation form for campaign #$id");
 
@@ -122,8 +134,7 @@ final class Campaign {
     Log::trace("Will accept donation form for campaign #$id");
     $donation = (object)$_POST;
 
-    //Mysql::db()->acceptDonation($id, $donation);
-    sleep(1);
+    Mysql::db()->acceptDonation($id, $donation);
 
     Log::trace("Accept donation form for campaign #$id");
 
@@ -196,18 +207,24 @@ final class Campaign {
     $intent    = "campaign-$id";
     $class     = "label $status";
     $label     = ucwords($status);
-    $actionbar = match ($status) {
-      "pending" => <<<HTML
-      <button hx-patch="/api/campaign/reject/$status/$id" hx-target="#campaign-$id" hx-swap="outerHTML">Tolak</button>
-      <button hx-patch="/api/campaign/approve/$status/$id" hx-target="#campaign-$id" hx-swap="outerHTML">Setujui</button>
-      HTML,
-      "ongoing" => match ($role) {
-        "ADMIN" => <<<HTML
-          <button hx-patch="/api/campaign/complete/$status/$id" hx-target="#campaign-$id" hx-swap="outerHTML">Selesai</button>
-          HTML,
-        default => Campaign::renderDonationButton($role, $id),
+
+    $actionbar = match ($role) {
+      'ADMIN' => match ($status) {
+        'pending' => <<<HTML
+        <button hx-patch="/api/campaign/reject/$status/$id" hx-target="#campaign-$id" hx-swap="outerHTML">Tolak</button>
+        <button hx-patch="/api/campaign/approve/$status/$id" hx-target="#campaign-$id" hx-swap="outerHTML">Setujui</button>
+        HTML,
+        'ongoing' => <<<HTML
+        <button hx-patch="/api/campaign/complete/$status/$id" hx-target="#campaign-$id" hx-swap="outerHTML">Selesai</button>
+        HTML,
+        default => <<<HTML
+        <button hx-patch="/api/campaign/remove/$status/$id" hx-target="closest li" hx-swap="outerHTML">Hapus</button>
+        HTML,
       },
-      default => '',
+      default => match ($status) {
+        'ongoing' => Campaign::renderDonationButton($role, $id),
+        default   => '',
+      }
     };
 
     return <<<HTML

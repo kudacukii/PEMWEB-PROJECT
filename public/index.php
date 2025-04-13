@@ -29,11 +29,14 @@ $router->post ('/login',                         'Controller\User@login');
 $router->post ('/logout',                        'Controller\User@logout');
 $router->post ('/register',                      'Controller\User@register');
 $router->get  ('/profile',                       'Controller\User@profile');
+$router->get  ('/campaign/start',                'Controller\User@createCampaign');
+$router->post ('/campaign/start',                'Controller\User@registerCampaign');
 $router->get  ('/campaign/(\d+)/(\d+)',          'Controller\Campaign@getCampaigns');
 $router->get  ('/campaign/latest',               'Controller\Campaign@getLatestCampaigns');
 $router->patch('/campaign/approve/(\w+)/(\d+)',  'Controller\Campaign@approveCampaign');
 $router->patch('/campaign/reject/(\w+)/(\d+)',   'Controller\Campaign@rejectCampaign');
 $router->patch('/campaign/complete/(\w+)/(\d+)', 'Controller\Campaign@closeCampaign');
+$router->patch('/campaign/remove/(\w+)/(\d+)',   'Controller\Campaign@removeCampaign');
 $router->get  ('/campaign/donate/(\d+)',         'Controller\Campaign@showDonation');
 $router->post ('/campaign/donate/(\d+)',         'Controller\Campaign@acceptDonation');
 
