@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bantoo! - Daftar</title>
+  <!-- CSS Global -->
+  <link rel="stylesheet" href="../css/global.css">
+  <link rel="stylesheet" href="../css/header.css">
+  <link rel="stylesheet" href="../css/buttons.css">
+  <link rel="stylesheet" href="../css/form.css">
+  <link rel="stylesheet" href="../css/footer.css">
+  <script src="https://unpkg.com/htmx.org@1.9.2" integrity="sha384-L6OqL9pRWyyFU3+/bjdSri+iIphTN/bvYyM37tICVyOJkWZLpP2vGn6VUEXgzg6h" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/hyperscript.org@0.9.8"></script>
+</head>
+<body>
+  <header>
+    <h1>Bantoo!</h1>
+    <nav>
+      <a href="../html/index.html">Beranda</a>
+      <a href="../html/login.html">Login</a>
+    </nav>
+  </header>
+  <main>
+    <section id="register">
+      <h2>Daftar</h2>
+      <form id="registerForm" hx-post="/api/register" enctype="multipart/form-data">
+        <div class="form-group">
+          <label for="registerName">Name:</label>
+          <input type="text" name="registerName" id="registerName" required>
+        </div>
+        <div class="form-group">
+          <label for="registerEmail">Email:</label>
+          <input type="email" name="registerEmail" id="registerEmail" required>
+        </div>
+        <div class="form-group">
+          <label for="registerPassword">Password:</label>
+          <input type="password" name="registerPassword" id="registerPassword" required>
+        </div>
+        <div class="upload-container">
+          <label for="registerFoto">
+            <img  id="profilePhoto" style="height:150px; width: auto; border-radius: 8px; cursor: pointer;" src="data:image/jpeg;base64,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" />
+          </label>
+          <input type="file" name="registerFoto" id="registerFoto" accept="image/jpeg" onchange="loadFoto(event)" hidden>
+          <script>
+            var loadFoto = function(event) {
+              var file = event.target.files[0];
+              if (['image/jpeg', 'image/jpg'].indexOf(file.type) < 0) return false;
+              var reader = new FileReader();
+              reader.onload = function() {
+                var output = document.getElementById('profilePhoto');
+                output.src = reader.result;
+              };
+              reader.readAsDataURL(event.target.files[0]);
+            };
+          </script>                    
+        </div>
+        <button type="submit">Daftar</button>
+      </form>
+      <p>Sudah punya akun? <a href="../html/login.html">Login di sini</a>.</p>
+    </section>
+  </main>
+
+  <footer>
+      <p>&copy; 2025 Bantoo!. Semua hak dilindungi.</p>
+  </footer>
+</body>
+</html>

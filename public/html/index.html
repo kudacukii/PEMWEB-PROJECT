@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bantoo! - Beranda</title>
+  <!-- CSS Global -->
+  <link rel="stylesheet" href="../css/global.css">
+  <link rel="stylesheet" href="../css/header.css">
+  <link rel="stylesheet" href="../css/buttons.css">
+  <link rel="stylesheet" href="../css/footer.css">
+  <link rel="stylesheet" href="../css/form.css">
+  <!-- CSS Khusus Beranda -->
+  <link rel="stylesheet" href="../css/home.css">
+  <script src="https://unpkg.com/htmx.org@1.9.2" integrity="sha384-L6OqL9pRWyyFU3+/bjdSri+iIphTN/bvYyM37tICVyOJkWZLpP2vGn6VUEXgzg6h" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/hyperscript.org@0.9.8"></script>
+</head>
+<body>
+  <header>
+    <h1>Bantoo!</h1>
+    <nav hx-get="/api/navigation/main" hx-trigger="load" hx-swap="outerHTML"></nav>
+  </header>
+  
+  <main>
+    <!-- Section Hero (Gambar Besar dan Teks) -->
+    <section id="hero">
+      <div class="hero-content">
+        <h2 class="outlined-text">Bersama Membantu Sesama</h2>
+        <p class="outlined-text">Bergabunglah dengan kami untuk memberikan bantuan kepada mereka yang membutuhkan.</p>
+        <div class="cta-buttons">
+          <button onclick="location.href='../html/kampanye.html'">Donasi Sekarang</button>
+        </div>
+      </div>
+    </section>
+    
+    <!-- Section Berita Terkini -->
+    <section id="berita">
+      <h2>Donasi Anda Sangat Dibutuhkan</h2>
+      <div class="berita-container" hx-get="/api/campaign/latest" hx-trigger="load" hx-swap="innerHTML swap:300ms">
+        <span>Loading...</span>
+        <div class="progress">
+          <div class="indeterminate"></div>
+        </div>
+      </div>
+    </section>
+    
+    <!-- Section Apa yang Sedang Terjadi -->
+    <section id="apa-terjadi">
+      <h2>Apa yang Sedang Terjadi?</h2>
+      <div class="content">
+        <img src="../foto/berita4.png" alt="Apa yang Sedang Terjadi">
+        <div class="text">
+          <p>
+            Saat ini, banyak daerah di Indonesia yang membutuhkan bantuan darurat akibat bencana alam seperti banjir, gempa bumi, dan kekeringan. 
+            Ribuan warga kehilangan tempat tinggal, akses air bersih, dan kebutuhan pokok lainnya. 
+            <strong>Bantoo!</strong> hadir untuk membantu mereka dengan menggalang donasi dan relawan. 
+            Mari bersama-sama meringankan beban mereka.
+          </p>
+          <button onclick="location.href='../html/kampanye.html'">Donasi Sekarang</button>
+        </div>
+      </div>
+    </section>
+    <section id="dialog">
+    </section>
+    <section id="notifikasi">
+    </section>
+  </main>
+  
+  <footer>
+    <p>&copy; 2025 Bantoo!. Semua hak dilindungi.</p>
+  </footer>
+</body>
+</html>

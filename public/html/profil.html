@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bantoo! - Profil</title>
+    <!-- CSS Global -->
+    <link rel="stylesheet" href="../css/global.css">
+    <link rel="stylesheet" href="../css/header.css">
+    <link rel="stylesheet" href="../css/buttons.css">
+    <link rel="stylesheet" href="../css/form.css">
+    <link rel="stylesheet" href="../css/footer.css">
+    <script src="https://unpkg.com/htmx.org@1.9.2" integrity="sha384-L6OqL9pRWyyFU3+/bjdSri+iIphTN/bvYyM37tICVyOJkWZLpP2vGn6VUEXgzg6h" crossorigin="anonymous"></script>
+    <script src="https://unpkg.com/hyperscript.org@0.9.8"></script>
+</head>
+<body>
+    <header>
+        <h1>Bantoo!</h1>
+        <nav hx-get="/api/navigation/profil" hx-trigger="load" hx-swap="outerHTML"></nav>
+    </header>
+
+    <main>
+        <section id="profil"  hx-get="/api/profile" hx-trigger="load">
+            <h2>Profil Pengguna</h2>
+            <div class="profil-container">
+            </div>
+        
+            <!-- Upload Foto Profil -->
+            <div class="upload-container">
+                <input type="file" id="uploadFoto" accept="image/*">
+                <button onclick="uploadFotoProfil()">Unggah Foto</button>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <p>&copy; 2025 Bantoo!. Semua hak dilindungi.</p>
+    </footer>
+</body>
+</html>
