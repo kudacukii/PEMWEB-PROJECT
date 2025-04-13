@@ -1,5 +1,0 @@
-2025-04-13 11:27:09 - Error: SQLSTATE[3D000]: Invalid catalog name: 1046 No database selected in C:\xampp\htdocs\pemweb\src\Bantoo\App\Database\Mysql.php on line 79
-2025-04-13 15:43:05 - Error: SQLSTATE[HY000] [1045] Access denied for user 'pemweb'@'localhost' (using password: NO) in C:\xampp\htdocs\pemweb\src\Bantoo\App\Database\Mysql.php on line 28
-2025-04-13 15:43:56 - Error: SQLSTATE[HY000] [1045] Access denied for user 'pemweb'@'localhost' (using password: NO) in C:\xampp\htdocs\pemweb\src\Bantoo\App\Database\Mysql.php on line 28
-2025-04-13 15:43:58 - Error: SQLSTATE[HY000] [1045] Access denied for user 'pemweb'@'localhost' (using password: NO) in C:\xampp\htdocs\pemweb\src\Bantoo\App\Database\Mysql.php on line 28
-2025-04-13 15:44:09 - Error: SQLSTATE[HY000] [1045] Access denied for user 'localhost'@'localhost' (using password: NO) in C:\xampp\htdocs\pemweb\src\Bantoo\App\Database\Mysql.php on line 28
