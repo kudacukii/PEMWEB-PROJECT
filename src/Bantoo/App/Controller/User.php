@@ -80,7 +80,7 @@ final class User {
   
   public static function menu($page): void {
     Log::trace("Process navigation for page $page");
-    $name  = $_SESSION['username'] ?? "N/A";
+    $name  = $_SESSION['useremail'] ?? "N/A";
     $userinfo = match ($name) {
       "N/A" => <<<HTML
       <a href="../html/login.html">Login</a>
@@ -120,8 +120,8 @@ final class User {
       <nav>
       <a href="../html/index.html">Beranda</a>
       <a href="../html/kampanye.html">Kampanye</a>
-      $userinfo
       <a href="../html/company-profile.html">Company Profile</a>
+      $userinfo
       </nav>
       HTML,
     };

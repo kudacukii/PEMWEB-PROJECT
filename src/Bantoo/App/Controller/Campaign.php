@@ -9,7 +9,12 @@ final class Campaign {
   public static function getCampaigns($lastindex, $pagesize): void {
     Log::trace("Render campaign from row id $lastindex for $pagesize rows");
 
-    $stmt = Mysql::db()->getCampaignData(Campaign::isAdmin(), $lastindex, $pagesize);
+    $campaign = new \stdClass();
+    $campaign->lastindex    = $lastindex;
+    $campaign->pagesize     = $pagesize;
+    $campaign->isActive     = !Campaign::isAdmin();
+    $campaign->maintainerId = Campaign::getCurrentUserId();
+    $stmt = Mysql::db()->getCampaignData($campaign);
 
     if ($stmt->rowCount() > 0) {
       $lastindex += $pagesize;
@@ -47,7 +52,7 @@ final class Campaign {
       Mysql::db()->setStatus($id, $curStatus, $newStatus);
     }
 
-    echo Campaign::renderIntent($id, $newStatus);
+    echo Campaign::renderIntent($id, 0, $newStatus);
   }
 
   public static function rejectCampaign(string $curStatus, int $id): void {
@@ -60,7 +65,7 @@ final class Campaign {
       Mysql::db()->setStatus($id, $curStatus, $newStatus);
     }
 
-    echo Campaign::renderIntent($id, $newStatus);
+    echo Campaign::renderIntent($id, 0, $newStatus);
   }
 
   public static function closeCampaign(string $curStatus, int $id): void {
@@ -74,7 +79,7 @@ final class Campaign {
       Mysql::db()->setStatus($id, $curStatus, $newStatus);
     }
 
-    echo Campaign::renderIntent($id, $newStatus);
+    echo Campaign::renderIntent($id, 0, $newStatus);
   }
 
   public static function removeCampaign(string $curStatus, int $id): void {
@@ -87,6 +92,49 @@ final class Campaign {
     }
 
     echo '';
+  }
+
+  public static function editCampaign(int $id) {
+    $campaign = (object)Mysql::db()->getCampaign($id);
+    echo <<<HTML
+    <div id="editCampaign" class="modal" _="on closeDialogCampaign add .closing then wait for animationend then remove me">
+      <div class="modal-underlay" _="on click trigger closeDialogCampaign"></div>
+        <div class="modal-content">
+        <form id="formKampanye" hx-post="/api/campaign/amend" hx-target="find .actionbar" _="on submit trigger hideActionBar">
+          <input type="hidden" name="id" value="$id"/>
+          <div class="form-group">
+            <label for="title">Nama Kampanye:</label>
+            <input type="text" name="title" value="$campaign->title" required>
+          </div>
+          <div class="form-group">
+            <label for="description">Deskripsi:</label>
+            <textarea name="description" required>$campaign->description</textarea>
+          </div>
+          <div class="form-group">
+            <label for="target">Target Donasi (Rp):</label>
+            <input type="currency" name="target" pattern="IDR\s[0-9,]{3,}[.]{0,1}[0-9]{1,2}" value="$campaign->target_donasi" required>
+          </div>
+          <div class="action actionbar">
+            <button type="submit" hx-indicator="#loading" _="on hideActionBar hide me">Perbarui Kampanye</button>
+            <img id="loading" class="htmx-indicator"/>
+          </div>
+        </form>
+        <script src="../js/currency.js"></script>
+      </div>
+    </div>
+    HTML;
+  }
+
+  public static function amendCampaign() {
+    $campaign = (object)$_POST;
+
+    Log::trace("Amend campaign : #$campaign->id");
+    $message = Mysql::db()->amendCampaign($campaign) ? 'berhasil' : 'gagal'; 
+
+    echo <<<HTML
+    <span>Perubahan $message</span>
+    <script type="text/hyperscript">init wait 2s then remove #campaign-$campaign->id then trigger closeDialogCampaign on #editCampaign</script>
+    HTML;
   }
 
   public static function showDonation(int $id): void {
@@ -153,11 +201,12 @@ final class Campaign {
     $raised_pct  = number_format($campaign->raised_pct,0,",",".") . "%";
     $impressions = $campaign->impressions;
     $donatur     = $campaign->donatur;
-    $intent      = Campaign::renderIntent($campaign->id, $status);
+    $mid         = $campaign->mid ?? 0;
+    $intent      = Campaign::renderIntent($campaign->id, $mid, $status);
     $imgsrc      = Campaign::renderImg($campaign);
 
     echo <<<HTML
-    <li>
+    <li id="campaign-$campaign->id">
       <div class="box">
         <div class="info">
           <img src="$imgsrc" style="width: 100px; height: auto; border-radius: 8px;"/>
@@ -202,29 +251,35 @@ final class Campaign {
     HTML;
   }
 
-  private static function renderIntent(int $id, string $status): string {
-    $role      = Campaign::getCurrentRole();
-    $intent    = "campaign-$id";
+  private static function renderIntent(int $id, int $mid, string $status): string {
+    $campaign = new \stdClass();
+    $campaign->role   = Campaign::getCurrentRole();
+    $campaign->id     = $id;
+    $campaign->status = $status;
+    $campaign->mid    = $mid;
+
+    $intent    = "campaign-action-$id";
     $class     = "label $status";
     $label     = ucwords($status);
 
-    $actionbar = match ($role) {
-      'ADMIN' => match ($status) {
+    $actionbar = match ($campaign->role) {
+      'ADMIN' => match ($campaign->status) {
         'pending' => <<<HTML
-        <button hx-patch="/api/campaign/reject/$status/$id" hx-target="#campaign-$id" hx-swap="outerHTML">Tolak</button>
-        <button hx-patch="/api/campaign/approve/$status/$id" hx-target="#campaign-$id" hx-swap="outerHTML">Setujui</button>
+        <button hx-patch="/api/campaign/reject/$status/$id" hx-target="#$intent" hx-swap="outerHTML">Tolak</button>
+        <button hx-patch="/api/campaign/approve/$status/$id" hx-target="#$intent" hx-swap="outerHTML">Setujui</button>
         HTML,
         'ongoing' => <<<HTML
-        <button hx-patch="/api/campaign/complete/$status/$id" hx-target="#campaign-$id" hx-swap="outerHTML">Selesai</button>
+        <button hx-patch="/api/campaign/complete/$status/$id" hx-target="#$intent" hx-swap="outerHTML">Selesai</button>
         HTML,
         default => <<<HTML
-        <button hx-patch="/api/campaign/remove/$status/$id" hx-target="closest li" hx-swap="outerHTML">Hapus</button>
+        <button hx-patch="/api/campaign/remove/$status/$id" hx-target="#campaign-$id" hx-swap="outerHTML">Hapus</button>
         HTML,
       },
-      default => match ($status) {
-        'ongoing' => Campaign::renderDonationButton($role, $id),
+      'USERS' => match ($status) {
+        'ongoing' => Campaign::renderUserButton($campaign),
         default   => '',
-      }
+      },
+      default => '',
     };
 
     return <<<HTML
@@ -250,6 +305,28 @@ final class Campaign {
     };
   }
 
+  private static function renderUserButton(object $campaign): string {
+    $editButton = ($campaign->mid > 0) ? 
+    <<<HTML
+    <button hx-get="/api/campaign/edit/$campaign->status/$campaign->id" hx-target="#dialog" hx-swap="beforeend">Edit Kampanye</button>
+    HTML
+    :
+    ''
+    ;
+    return match ($campaign->role) {
+      'N/A' => 
+        <<<HTML
+        <button onclick="location.href='../html/login.html'">Donasi Sekarang</button>
+        HTML,
+      'USERS' =>
+        <<<HTML
+        $editButton
+        <button hx-get="/api/campaign/donate/$$campaign->id" hx-target="#dialog" hx-swap="beforeend">Donasi Sekarang</button>
+        HTML,
+      default => ''
+    };
+  }
+
   private static function renderImg(object $campaign): string {
     return ($campaign->photo === null || $campaign->content_type === null) ? "../foto/hayya.png" : "data:$campaign->content_type;base64," . base64_encode($campaign->photo);
   }
@@ -260,5 +337,9 @@ final class Campaign {
 
   private static function getCurrentRole(): string {
     return $_SESSION['userrole'] ?? 'N/A';
+  }
+
+  private static function getCurrentUserId(): int {
+    return (int)($_SESSION['userid'] ?? '-1');
   }
 }

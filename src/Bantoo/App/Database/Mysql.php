@@ -6,9 +6,9 @@ use \Bantoo\App\Utils\Log;
 use PDOStatement;
 
 final class Mysql {
-  private static $dsn = "mysql:host=localhost;port=3306;dbname=bantoo;charset=UTF8";
+  private static $dsn = "mysql:unix_socket=/run/mysqld/mysqld.sock;dbname=bantoo;charset=UTF8";
   
-  private static $username = "root";
+  private static $username = "pemweb";
   private static $password = "";
   
   private static $options = [
@@ -42,7 +42,7 @@ final class Mysql {
     return self::$instance;
   }
 
-  public function getCampaignData(bool $isAdmin, int $lastindex, int $pagesize): bool | PDOStatement {
+  public function getCampaignData(object $campaign): bool | PDOStatement {
     $allCampaignSql = <<<SQL
     with 
       active as (select c.* from all_campaigns c where rid > :lastindex limit :pagesize)
@@ -55,20 +55,54 @@ final class Mysql {
     SQL;
 
     $activeCampaignSql = <<<SQL
-    with 
+    with
+      maintainer as (select m.campaign_id as cid, m.maintainer_id as uid from campaign_maintainer m where maintainer_id = :mid),
       active as (select c.* from active_campaigns c where rid > :lastindex limit :pagesize)
     select
-      a.*, p.* 
+    coalesce(m.uid, 0) mid, a.*, p.*
     from 
       active a 
     inner join 
       campaign_progress p on p.pid = a.id
+    left outer join
+      maintainer m on m.cid = a.id
     SQL;
- 
-    $stmt = $this->connection->prepare($isAdmin ? $allCampaignSql : $activeCampaignSql);
-    $stmt->execute(['lastindex' => $lastindex, 'pagesize' => $pagesize]);
+    
+    $stmt = $this->connection->prepare($campaign->isActive ? $activeCampaignSql : $allCampaignSql);
+    $stmt->bindParam('lastindex', $campaign->lastindex);
+    $stmt->bindParam('pagesize', $campaign->pagesize);
+
+    if ($campaign->isActive) {
+      $stmt->bindParam('mid', $campaign->maintainerId);
+    }
+
+    $stmt->execute();
     
     return $stmt;
+  }
+
+  public function getCampaign(int $cid) {
+    $sql = <<<SQL
+    select c.* from campaigns c where c.status='ONGOING' and c.id = :id;
+    SQL;
+
+    $stmt = $this->connection->prepare($sql);
+    $stmt->execute(['id' => $cid]);
+    return $stmt->fetchAll(\PDO::FETCH_ASSOC)[0];
+  }
+
+  public function amendCampaign(object $campaign): bool {
+    $sql = <<<SQL
+    update campaign set title = :title, description = :desc, target_donasi = :target, status = 'PENDING' where id = :id;
+    SQL;
+
+    $stmt = $this->connection->prepare($sql);
+    return $stmt->execute([
+      'id'     => $campaign->id,
+      'title'  => $campaign->title,
+      'desc'   => $campaign->description,
+      'target' => $this->numberFromString($campaign->target)
+    ]);
   }
 
   public function getLatestCampaignData(): bool | PDOStatement {

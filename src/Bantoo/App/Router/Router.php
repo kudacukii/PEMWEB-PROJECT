@@ -81,10 +81,10 @@ final class Router
     $pattern = $this->baseRoute ? rtrim($pattern, '/') : $pattern;
 
     foreach (explode('|', $methods) as $method) {
-      $this->afterRoutes[$method][] = array(
+      $this->afterRoutes[$method][] = [
         'pattern' => $pattern,
         'fn' => $fn,
-      );
+      ];
     }
   }
 

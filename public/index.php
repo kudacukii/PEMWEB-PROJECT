@@ -33,6 +33,8 @@ $router->get  ('/campaign/start',                'Controller\User@createCampaign
 $router->post ('/campaign/start',                'Controller\User@registerCampaign');
 $router->get  ('/campaign/(\d+)/(\d+)',          'Controller\Campaign@getCampaigns');
 $router->get  ('/campaign/latest',               'Controller\Campaign@getLatestCampaigns');
+$router->get  ('/campaign/edit/ongoing/(\d+)',   'Controller\Campaign@editCampaign');
+$router->post ('/campaign/amend',                'Controller\Campaign@amendCampaign');
 $router->patch('/campaign/approve/(\w+)/(\d+)',  'Controller\Campaign@approveCampaign');
 $router->patch('/campaign/reject/(\w+)/(\d+)',   'Controller\Campaign@rejectCampaign');
 $router->patch('/campaign/complete/(\w+)/(\d+)', 'Controller\Campaign@closeCampaign');
